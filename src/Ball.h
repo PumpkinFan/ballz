@@ -3,14 +3,14 @@
 
 #include "raylib.h"
 #include "raymath.h"
-#include <array>
+#include <vector>
 
 const float DT = 1;
 
 struct Ball {
     Vector2 position;
     Vector2 initialVelocity;
-    Vector2 pastPosition = Vector2Subtract(position, initialVelocity);
+    Vector2 pastPosition = Vector2Subtract(position, Vector2Scale(initialVelocity, DT));
     Vector2 acceleration = { 0.0f, 0.0f };
     int radius = 40;
     int mass = 1;
@@ -24,6 +24,7 @@ struct Ball {
 
 void handleBallCollision(Ball &ball1, Ball &ball2);
 
-std::array<Ball, 2> overlapAfterCollisionTest();
+std::vector<Ball> overlapAfterCollisionTest();
+std::vector<Ball> threeBallsBouncing();
 
 #endif // BALL_H

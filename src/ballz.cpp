@@ -12,6 +12,12 @@
 *
 ********************************************************************************************/
 
+// TODO
+// Create class for ball states -> needs to store in fixed size array for efficiency
+// But game architecture should be able to load states of any size 
+
+// Add ENUM for run modes (e.g. Dev, Debug, Main)
+
 #include "raylib.h"
 #include "raymath.h"
 #include "screens.h"    // NOTE: Declares global (extern) variables and screens functions
@@ -82,29 +88,14 @@ int main(void)
 #if defined(PLATFORM_WEB)
     emscripten_set_main_loop(UpdateDrawFrame, 60, 1);
 #else
-    SetTargetFPS(60);       // Set our game to run at 60 frames-per-second
+    SetTargetFPS(1);       // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
     // My stuff
-    std::array<Ball, 2> ballz = overlapAfterCollisionTest();
+    std::vector<Ball> ballz = overlapAfterCollisionTest();
 
     Vector2 ballSpeed1 = { 4.0f, -6.0f };
     Vector2 ballSpeed2 = { 10.0f, 4.0f };
-
-    Ball ball1;
-    ball1.position = { GetScreenWidth()/4.0f, GetScreenHeight()/4.0f};
-    ball1.pastPosition = Vector2Subtract(ball1.position, Vector2Scale(ballSpeed1, DT));
-
-    Ball ball2;
-    ball2.position = { GetScreenWidth()/4.0f, 3.0f*GetScreenHeight() / 4.0f };
-    ball2.pastPosition = Vector2Subtract(ball2.position, Vector2Scale(ballSpeed2, DT));
-    ball2.color = GREEN;
-
-    Ball ball3;
-    ball3.position = { GetScreenWidth()/7.0f, GetScreenHeight()/7.0f };
-    ball3.pastPosition = ball3.position;
-    ball3.color = ORANGE;
-    ball3.mass = 10;
 
     bool pause = 0;
     int framesCounter = 0;
@@ -117,22 +108,19 @@ int main(void)
         //-----------------------------------------------------
         // Game Updates
         //-----------------------------------------------------
+        if (IsKeyPressed(KEY_Q) && IsKeyPressed(KEY_LEFT_CONTROL)) {
+            
+        }
+
         if (IsKeyPressed(KEY_SPACE)) pause = !pause;
         if (!pause)
         {
-
             for (int i = 0; i < ballz.size(); ++i) {
                 ballz[i].updatePostion();
                 for (int j = i + 1; j < ballz.size(); ++j ) {
                     handleBallCollision(ballz[i], ballz[j]);
                 }
             } 
-            ball1.updatePostion();
-            ball2.updatePostion();
-            ball3.updatePostion();
-            handleBallCollision(ball1, ball2);
-            handleBallCollision(ball1, ball3);
-            handleBallCollision(ball3, ball2);
             
         }
         else framesCounter++;
@@ -144,9 +132,10 @@ int main(void)
 
             ClearBackground(RAYWHITE);
 
-            ball1.draw();
-            ball2.draw();
-            ball3.draw();
+            for (Ball ball :  ballz) {
+                ball.draw();
+            }
+
             // DrawCircleV(ballPosition, (float)ballRadius, MAROON);
             DrawText("PRESS SPACE to PAUSE BALL MOVEMENT", 10, GetScreenHeight() - 25, 20, LIGHTGRAY);
 

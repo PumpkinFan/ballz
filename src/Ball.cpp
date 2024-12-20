@@ -29,6 +29,7 @@ void Ball::updatePostion() {
 
 void Ball::draw() {
     DrawCircleV(position, (float)radius, color);
+    DrawCircleV(pastPosition, 3.0f, RED);
 }
 
 
@@ -65,10 +66,10 @@ void handleBallCollision(Ball &ball1, Ball &ball2) {
     float distanceAfterCollision = Vector2Distance(Vector2Add(ball1.position, newVelocity1), Vector2Add(ball2.position, newVelocity2));
     float overlapAfterCollision = radiusSum - distanceAfterCollision;
     if (overlapAfterCollision > 0) {
-        ball1.position = Vector2Add(ball1.position, Vector2Scale(unitNormal, overlapAfterCollision * (ball1.radius / radiusSum)));
+        ball1.position = Vector2Add(ball1.position, Vector2Scale(unitNormal, -1 * overlapAfterCollision * (ball1.radius / radiusSum)));
         ball2.position = Vector2Add(ball2.position, Vector2Scale(unitNormal, overlapAfterCollision * (ball2.radius / radiusSum)));
     }
 
-    ball1.pastPosition = Vector2Subtract(ball1.position, newVelocity1);
-    ball2.pastPosition = Vector2Subtract(ball2.position, newVelocity2);
+    ball1.pastPosition = Vector2Subtract(ball1.position, Vector2Scale(newVelocity1, DT));
+    ball2.pastPosition = Vector2Subtract(ball2.position, Vector2Scale(newVelocity2, DT));
 }
