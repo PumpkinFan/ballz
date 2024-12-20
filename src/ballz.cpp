@@ -13,7 +13,9 @@
 ********************************************************************************************/
 
 #include "raylib.h"
+#include "raymath.h"
 #include "screens.h"    // NOTE: Declares global (extern) variables and screens functions
+#include "Ball.h"
 
 #if defined(PLATFORM_WEB)
     #include <emscripten/emscripten.h>
@@ -31,8 +33,8 @@ Sound fxCoin = { 0 };
 //----------------------------------------------------------------------------------
 // Local Variables Definition (local to this module)
 //----------------------------------------------------------------------------------
-static const int screenWidth = 800;
-static const int screenHeight = 450;
+static const int screenWidth = 1200;
+static const int screenHeight = 720;
 
 // Required variables to manage screen transitions (fade-in, fade-out)
 static float transAlpha = 0.0f;
@@ -52,6 +54,7 @@ static void DrawTransition(void);           // Draw transition effect (full-scre
 
 static void UpdateDrawFrame(void);          // Update and draw one frame
 
+
 //----------------------------------------------------------------------------------
 // Main entry point
 //----------------------------------------------------------------------------------
@@ -59,7 +62,8 @@ int main(void)
 {
     // Initialization
     //---------------------------------------------------------
-    InitWindow(screenWidth, screenHeight, "raylib game template");
+    InitWindow(screenWidth, screenHeight, "ballz");
+    SetConfigFlags(FLAG_MSAA_4X_HINT);  // enable anti-aliasing
 
     InitAudioDevice();      // Initialize audio device
 
@@ -81,10 +85,77 @@ int main(void)
     SetTargetFPS(60);       // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
+    // My stuff
+    std::array<Ball, 2> ballz = overlapAfterCollisionTest();
+
+    Vector2 ballSpeed1 = { 4.0f, -6.0f };
+    Vector2 ballSpeed2 = { 10.0f, 4.0f };
+
+    Ball ball1;
+    ball1.position = { GetScreenWidth()/4.0f, GetScreenHeight()/4.0f};
+    ball1.pastPosition = Vector2Subtract(ball1.position, Vector2Scale(ballSpeed1, DT));
+
+    Ball ball2;
+    ball2.position = { GetScreenWidth()/4.0f, 3.0f*GetScreenHeight() / 4.0f };
+    ball2.pastPosition = Vector2Subtract(ball2.position, Vector2Scale(ballSpeed2, DT));
+    ball2.color = GREEN;
+
+    Ball ball3;
+    ball3.position = { GetScreenWidth()/7.0f, GetScreenHeight()/7.0f };
+    ball3.pastPosition = ball3.position;
+    ball3.color = ORANGE;
+    ball3.mass = 10;
+
+    bool pause = 0;
+    int framesCounter = 0;
+
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
-        UpdateDrawFrame();
+        // UpdateDrawFrame();
+     
+        //-----------------------------------------------------
+        // Game Updates
+        //-----------------------------------------------------
+        if (IsKeyPressed(KEY_SPACE)) pause = !pause;
+        if (!pause)
+        {
+
+            for (int i = 0; i < ballz.size(); ++i) {
+                ballz[i].updatePostion();
+                for (int j = i + 1; j < ballz.size(); ++j ) {
+                    handleBallCollision(ballz[i], ballz[j]);
+                }
+            } 
+            ball1.updatePostion();
+            ball2.updatePostion();
+            ball3.updatePostion();
+            handleBallCollision(ball1, ball2);
+            handleBallCollision(ball1, ball3);
+            handleBallCollision(ball3, ball2);
+            
+        }
+        else framesCounter++;
+
+        //-----------------------------------------------------
+        // Draw
+        //-----------------------------------------------------
+        BeginDrawing();
+
+            ClearBackground(RAYWHITE);
+
+            ball1.draw();
+            ball2.draw();
+            ball3.draw();
+            // DrawCircleV(ballPosition, (float)ballRadius, MAROON);
+            DrawText("PRESS SPACE to PAUSE BALL MOVEMENT", 10, GetScreenHeight() - 25, 20, LIGHTGRAY);
+
+            // On pause, we draw a blinking message
+            if (pause && ((framesCounter/30)%2)) DrawText("PAUSED", 350, 200, 30, GRAY);
+
+            DrawFPS(10, 10);
+
+        EndDrawing();
     }
 #endif
 
@@ -118,7 +189,7 @@ int main(void)
 // Module specific Functions Definition
 //----------------------------------------------------------------------------------
 // Change to next screen, no transition
-static void ChangeToScreen(int screen)
+static void ChangeToScreen(GameScreen screen)
 {
     // Unload current screen
     switch (currentScreen)
@@ -146,7 +217,7 @@ static void ChangeToScreen(int screen)
 }
 
 // Request transition to next screen
-static void TransitionToScreen(int screen)
+static void TransitionToScreen(GameScreen screen)
 {
     onTransition = true;
     transFadeOut = false;
